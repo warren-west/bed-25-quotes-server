@@ -36,13 +36,29 @@ function addQuote(quote) {
 }
 
 // Delete a quote from the database, by ID:
-function deleteQuote() {
+function deleteQuote(id) {
+    // dealing with a 404 Not Found
+    if (!database[id]) {
+        return { code: 404, message: `Quote with the id: ${id} is not found.` }
+    }
 
+    database.splice(id, 1) // remove the element from the database array
+    return { code: 204, message: `Quote with the id: ${id} has been deleted from the database.`}
 }
 
 // Update the text of a quote in the db, by ID:
 function updateQuote() {
 
+}
+
+function populateDatabase() {
+    // TODO: Implement populating the database with dummy data
+    database = [
+        "",
+        "",
+        "",
+        "",
+    ]
 }
 
 module.exports = {

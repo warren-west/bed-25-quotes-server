@@ -15,7 +15,7 @@
 // 3. Run the server (listen).
 
 const http = require('http')
-const { getAllQuotes, getQuoteById, addQuote } = require('./database.js')
+const { getAllQuotes, getQuoteById, addQuote, deleteQuote } = require('./database.js')
 
 http.createServer((req, res) => {
     // Get METHOD and URL from request
@@ -63,9 +63,12 @@ http.createServer((req, res) => {
 
     } else if (method == "POST") {
         // add a quote to the db
-
         // get the text attached to the request body
         let data = ""
+
+        // the request object has an event trigger that we can use; the on() function
+        // .on("data")
+        // .on("end")
         req.on("data", (chunk) => {
             data += chunk
         })
@@ -85,6 +88,20 @@ http.createServer((req, res) => {
 
     } else if (method == "DELETE") {
         // delete item from db
+
+        // get the ID from the URL
+        const id = Number(url.split('/')[1])
+
+        // call the deleteQuote() function
+        const result = deleteQuote(id)
+
+        // create the response
+        res.statusCode = result.code
+        res.write(result.message)
+        res.end()
+
+        // return
+        return
 
     } else if (method == "PUT") {
         // update item in DB
