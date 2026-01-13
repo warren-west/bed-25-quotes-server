@@ -15,9 +15,16 @@
 // 3. Run the server (listen).
 
 const http = require('http')
-const { getAllQuotes, getQuoteById, addQuote, deleteQuote } = require('./database.js')
+const { getAllQuotes, getQuoteById, addQuote, deleteQuote, updateQuote, populateDatabase } = require('./database.js')
 
-http.createServer((req, res) => {
+http.createServer(async (req, res) => {
+    // CORS (Cross-Origin Resource Sharing)
+    // CORS Configuration is a type of security measure we can implement in back end applications
+    // Here, we determine which addresses we allow requests to come from, what type of HTTP methods they're allowed to send, and more
+    res.setHeader("Access-Control-Allow-Origin", "*") // allow all incoming URLs
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT") // allow all CRUD methods
+    // res.setHeader("Access-Control-Allow-Headers", "Content-Type") // allow requests with certain headers
+
     // Get METHOD and URL from request
     const method = req.method
     const url = req.url
@@ -26,8 +33,8 @@ http.createServer((req, res) => {
     console.log(`URL: ${url}`)
 
     // if method is GET (getAllQuotes or getOneQuoteById)
-        // if URL ends with /{:id} we want to get a single quote
-        // if it ends with /all we return all the quotes in the database
+    // if URL ends with /{:id} we want to get a single quote
+    // if it ends with /all we return all the quotes in the database
     // if method is POST addQuote
     // if method is PUT updateQuote
     // if method is DELETE deleteQuote
@@ -51,14 +58,24 @@ http.createServer((req, res) => {
         // "/22".split('/') -> ["", "22"]
         const id = Number(url.split('/')[1])
         const result = getQuoteById(id)
-        
+
         console.log(result.message)
-        
+
         // construct the response:
         res.statusCode = result.code
         res.write(result.data)
         res.end()
 
+        return
+
+    } else if (method == "POST" && url.endsWith("/populate")) {
+        // populate the database
+        const result = await populateDatabase()
+
+        // create a response to send back to the client:
+        res.statusCode = result.code
+        res.write(result.message)
+        res.end()
         return
 
     } else if (method == "POST") {
@@ -91,23 +108,44 @@ http.createServer((req, res) => {
 
         // get the ID from the URL
         const id = Number(url.split('/')[1])
-
+        
         // call the deleteQuote() function
         const result = deleteQuote(id)
-
+        
         // create the response
         res.statusCode = result.code
         res.write(result.message)
         res.end()
-
+        
         // return
         return
-
+        
     } else if (method == "PUT") {
         // update item in DB
+        // Get the ID for the quote to replace
+        
+        // localhost:8080/2
+        const id = Number(url.split('/')[1])
+        
+        let data = ""
+        // get the new quote text
+        req.on("data", (chunk) => {
+            data += chunk
+        })
+        req.on("end", () => {
+            // the data variable is complete, all of the chunks have streamed in from the request
 
+            // replace the old quote text with the new quote text
+            const result = updateQuote(id, data)
+            
+            // send back appropriate response to the client
+            res.statusCode = result.code
+            res.write(result.message)
+            res.end()
+            return
+        })        
     }
 })
-.listen(8080, () => {
-    console.log(`Server is running on port 8080...`)
-})
+    .listen(8080, () => {
+        console.log(`Server is running on port 8080...`)
+    })
